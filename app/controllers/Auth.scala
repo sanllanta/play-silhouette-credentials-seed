@@ -55,30 +55,37 @@ class Auth @Inject() (
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////	
   // SIGN UP
 
-  val owaspMaxLength = 128
+  val owaspMaxLength = 32
   val owaspMinLength = 10
-  val sequencesOfThreeOrMore = """/(.)\1{2,}/""".r
-  val lowerCaseCharacter = """!/[a-z]/""".r
-  val upperCaseCharacter = """!/[A-Z]/""".r
-  val numberCharacter = """!/[0-9]/""".r
-  val specialCharacter = """!/[^A-Za-z0-9]/""".r
+  val sequencesOfThreeOrMore = """.*(\w)\1{2,}.*""".r
+  val lowerCaseCharacter = """.*[a-z].*""".r
+  val upperCaseCharacter = """.*[A-Z].*""".r
+  val numberCharacter = """.*[0-9].*""".r
+  val specialCharacter = """.*[^A-Za-z0-9].*""".r
 
   def owaspValid: Constraint[String] = Constraint[String]("constraint.owasp-strenght") { o =>
+
+    val thereAreSequences = sequencesOfThreeOrMore.pattern.matcher(o).matches()
+    val thereIsNoLowerCase = !lowerCaseCharacter.pattern.matcher(o).matches()
+    val thereIsNoUpperCase = !upperCaseCharacter.pattern.matcher(o).matches()
+    val thereIsNoNumber = !numberCharacter.pattern.matcher(o).matches()
+    val thereIsNoSpecialCharacter = !specialCharacter.pattern.matcher(o).matches()
+
     if (o == null)
       Invalid(ValidationError("error.passwordEmpty"))
     else if (o.size < owaspMinLength)
       Invalid(ValidationError(s"The password must be at least $owaspMinLength characters long.", o.size))
     else if (o.size > owaspMaxLength)
       Invalid(ValidationError(s"The password must be fewer than $owaspMaxLength characters long.", o.size))
-    else if (sequencesOfThreeOrMore.pattern.matcher(o).matches())
+    else if (thereAreSequences)
       Invalid(ValidationError("The password may not contain sequences of three or more repeated characters.", o))
-    else if (lowerCaseCharacter.pattern.matcher(o).matches())
+    else if (thereIsNoLowerCase)
       Invalid(ValidationError("The password must contain at least one lowercase letter.", o))
-    else if (upperCaseCharacter.pattern.matcher(o).matches())
+    else if (thereIsNoUpperCase)
       Invalid(ValidationError("The password must contain at least one uppercase letter.", o))
-    else if (numberCharacter.pattern.matcher(o).matches())
+    else if (thereIsNoNumber)
       Invalid(ValidationError("The password must contain at least one number.", o))
-    else if (specialCharacter.pattern.matcher(o).matches())
+    else if (thereIsNoSpecialCharacter)
       Invalid(ValidationError("The password must contain at least one special character.", o))
     else
       Valid
