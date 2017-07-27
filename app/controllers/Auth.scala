@@ -62,6 +62,7 @@ class Auth @Inject() (
   val upperCaseCharacter = """.*[A-Z].*""".r
   val numberCharacter = """.*[0-9].*""".r
   val specialCharacter = """.*[^A-Za-z0-9].*""".r
+  val usernameRegex = """^[a-zA-Z0-9.-]+$""".r
 
   def owaspValid: Constraint[String] = Constraint[String]("constraint.owasp-strenght") { o =>
 
@@ -91,13 +92,25 @@ class Auth @Inject() (
       Valid
   }
 
+  def usernameValid: Constraint[String] = Constraint[String]("constraint.owasp-strenght") { o =>
+
+    val usernameValid = usernameRegex.pattern.matcher(o).matches()
+
+    if (o == null)
+      Invalid(ValidationError("error.usernameEmpty"))
+    else if (!usernameValid)
+      Invalid(ValidationError("The username must only have digits, letters, and the character -", o))
+    else
+      Valid
+  }
+
   val signUpForm = Form(
     mapping(
       "id" -> ignored(None: Option[Long]),
       "email" -> email.verifying(maxLength(250)),
       "emailConfirmed" -> ignored(false),
       "password" -> text.verifying(owaspValid),
-      "nick" -> nonEmptyText,
+      "nick" -> text.verifying(usernameValid),
       "firstName" -> nonEmptyText,
       "lastName" -> nonEmptyText,
       "services" -> list(nonEmptyText)
