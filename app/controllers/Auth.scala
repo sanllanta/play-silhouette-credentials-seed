@@ -3,9 +3,9 @@ package controllers
 import models._
 import utils.silhouette._
 import utils.silhouette.Implicits._
-import com.mohiva.play.silhouette.api.{ Silhouette, LoginInfo, SignUpEvent, LoginEvent, LogoutEvent }
+import com.mohiva.play.silhouette.api.{ LoginEvent, LoginInfo, LogoutEvent, SignUpEvent, Silhouette }
 import com.mohiva.play.silhouette.api.repositories.AuthInfoRepository
-import com.mohiva.play.silhouette.api.util.{ Credentials, PasswordHasherRegistry, Clock }
+import com.mohiva.play.silhouette.api.util.{ Clock, Credentials, PasswordHasherRegistry }
 import com.mohiva.play.silhouette.api.exceptions.ProviderException
 import com.mohiva.play.silhouette.impl.providers.CredentialsProvider
 import com.mohiva.play.silhouette.impl.authenticators.CookieAuthenticator
@@ -17,14 +17,21 @@ import play.api.Play.current
 import play.api.data.Form
 import play.api.data.Forms._
 import play.api.data.validation.Constraints._
-import play.api.i18n.{ MessagesApi, Messages }
+import play.api.i18n.{ Messages, MessagesApi }
 import utils.Mailer
+
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits._
 import scala.concurrent.duration._
 import net.ceedubs.ficus.Ficus._
 import javax.inject.{ Inject, Singleton }
+
 import views.html.{ auth => viewsAuth }
+import javax.script.ScriptEngineManager
+
+import play.api.data.validation.{ Constraint, Invalid, Valid, ValidationError }
+
+import scala.util.matching.Regex
 
 @Singleton
 class Auth @Inject() (
@@ -48,12 +55,41 @@ class Auth @Inject() (
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////	
   // SIGN UP
 
+  val owaspMaxLength = 128
+  val owaspMinLength = 10
+  val sequencesOfThreeOrMore = """/(.)\1{2,}/""".r
+  val lowerCaseCharacter = """!/[a-z]/""".r
+  val upperCaseCharacter = """!/[A-Z]/""".r
+  val numberCharacter = """!/[0-9]/""".r
+  val specialCharacter = """!/[^A-Za-z0-9]/""".r
+
+  def owaspValid: Constraint[String] = Constraint[String]("constraint.owasp-strenght") { o =>
+    if (o == null)
+      Invalid(ValidationError("error.passwordEmpty"))
+    else if (o.size < owaspMinLength)
+      Invalid(ValidationError(s"The password must be at least $owaspMinLength characters long.", o.size))
+    else if (o.size > owaspMaxLength)
+      Invalid(ValidationError(s"The password must be fewer than $owaspMaxLength characters long.", o.size))
+    else if (sequencesOfThreeOrMore.pattern.matcher(o).matches())
+      Invalid(ValidationError("The password may not contain sequences of three or more repeated characters.", o))
+    else if (lowerCaseCharacter.pattern.matcher(o).matches())
+      Invalid(ValidationError("The password must contain at least one lowercase letter.", o))
+    else if (upperCaseCharacter.pattern.matcher(o).matches())
+      Invalid(ValidationError("The password must contain at least one uppercase letter.", o))
+    else if (numberCharacter.pattern.matcher(o).matches())
+      Invalid(ValidationError("The password must contain at least one number.", o))
+    else if (specialCharacter.pattern.matcher(o).matches())
+      Invalid(ValidationError("The password must contain at least one special character.", o))
+    else
+      Valid
+  }
+
   val signUpForm = Form(
     mapping(
       "id" -> ignored(None: Option[Long]),
       "email" -> email.verifying(maxLength(250)),
       "emailConfirmed" -> ignored(false),
-      "password" -> nonEmptyText.verifying(minLength(6)),
+      "password" -> text.verifying(owaspValid),
       "nick" -> nonEmptyText,
       "firstName" -> nonEmptyText,
       "lastName" -> nonEmptyText,

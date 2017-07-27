@@ -31,7 +31,8 @@ libraryDependencies ++= Seq(
   cache,
   ws,
   specs2 % Test,
-	"org.webjars" % "requirejs" % "2.3.1",
+  "org.webjars" % "zxcvbn" % "4.3.0",
+  "org.webjars" % "requirejs" % "2.3.1",
 	"com.adrianhurt" %% "play-bootstrap" % "1.1-P25-B3",	// Add bootstrap helpers and field constructors (http://adrianhurt.github.io/play-bootstrap/)
   "com.mohiva" %% "play-silhouette" % "4.0.0",
   "com.mohiva" %% "play-silhouette-password-bcrypt" % "4.0.0",
