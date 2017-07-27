@@ -2,6 +2,9 @@ package models
 
 import utils.silhouette.IdentitySilhouette
 import com.mohiva.play.silhouette.password.BCryptPasswordHasher
+import converters.UserConverter
+import persistence.UserRepository
+
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
 
@@ -36,16 +39,25 @@ object User {
     4L -> User(Some(4L), "a_b@myweb.com", true, (new BCryptPasswordHasher()).hash("123123").password, "Tyry", "Tyrion", "Lannister", List("serviceA", "serviceB"))
   )
 
-  def findByEmail(email: String): Future[Option[User]] = Future.successful(users.find(_._2.email == email).map(_._2))
+  //  def findByEmail(email: String): Future[Option[User]] = Future.successful(users.find(_._2.email == email).map(_._2))
+  //
+  //  def save(user: User): Future[User] = {
+  //    // A rudimentary auto-increment feature...
+  //    def nextId: Long = users.maxBy(_._1)._1 + 1
+  //
+  //    val theUser = if (user.id.isDefined) user else user.copy(id = Some(nextId))
+  //    users += (theUser.id.get -> theUser)
+  //    Future.successful(theUser)
+  //  }
+  //
+  //  def remove(email: String): Future[Unit] = findByEmail(email).map(_.map(u => users.remove(u.id.get)))
 
-  def save(user: User): Future[User] = {
-    // A rudimentary auto-increment feature...
-    def nextId: Long = users.maxBy(_._1)._1 + 1
+  def findByEmail(email: String): Future[Option[User]] =
+    UserRepository.findByEmail(email).map(_.map(UserConverter.fromPersistence))
 
-    val theUser = if (user.id.isDefined) user else user.copy(id = Some(nextId))
-    users += (theUser.id.get -> theUser)
-    Future.successful(theUser)
-  }
+  def save(user: User): Future[User] =
+    UserRepository.save(UserConverter.fromModel(user)).map(_ => user)
 
-  def remove(email: String): Future[Unit] = findByEmail(email).map(_.map(u => users.remove(u.id.get)))
+  def remove(email: String): Future[Unit] =
+    UserRepository.remove(email).map(_ => Unit)
 }

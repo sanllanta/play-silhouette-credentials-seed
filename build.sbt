@@ -40,5 +40,8 @@ libraryDependencies ++= Seq(
   "com.mohiva" %% "play-silhouette-testkit" % "4.0.0" % "test",
   "net.codingwell" %% "scala-guice" % "4.0.1",
   "com.iheart" %% "ficus" % "1.2.6",
-	"com.typesafe.play" %% "play-mailer" % "5.0.0"
+	"com.typesafe.play" %% "play-mailer" % "5.0.0",
+  "com.typesafe.slick" %% "slick" % "3.1.1" withSources() withJavadoc(),
+  "com.github.tminglei" %% "slick-pg_circe-json" % "0.14.1",
+  "com.h2database" % "h2" % "1.4.190"
 )
