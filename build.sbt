@@ -60,6 +60,7 @@ libraryDependencies ++= Seq(
   "com.typesafe.play" %% "play-mailer" % "5.0.0",
   "com.typesafe.slick" %% "slick" % "3.1.1" withSources() withJavadoc(),
   "com.github.tminglei" %% "slick-pg_circe-json" % "0.14.1",
+  "com.github.tototoshi" %% "slick-joda-mapper" % "2.0.0",
   "com.h2database" % "h2" % "1.4.190",
   "com.roundeights" %% "hasher" % "1.2.0"
 )
