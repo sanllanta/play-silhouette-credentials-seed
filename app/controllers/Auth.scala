@@ -113,7 +113,8 @@ class Auth @Inject() (
       "nick" -> text.verifying(usernameValid),
       "firstName" -> nonEmptyText,
       "lastName" -> nonEmptyText,
-      "services" -> list(nonEmptyText)
+      "services" -> list(nonEmptyText),
+      "salt" -> ignored("": String)
     )(User.apply)(User.unapply)
   )
 

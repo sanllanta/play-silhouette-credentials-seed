@@ -5,10 +5,10 @@ import persistence.UserPersistence
 
 object UserConverter {
   def fromPersistence(u: UserPersistence): User = {
-    User(u.id, u.email, u.emailConfirmed, u.password, u.nick, u.firstName, u.lastName, u.services.split(":").toList)
+    User(u.id, u.email, u.emailConfirmed, u.password, u.nick, u.firstName, u.lastName, u.services.split(":").toList, u.salt)
   }
 
   def fromModel(u: User): UserPersistence = {
-    UserPersistence(u.id, u.email, u.emailConfirmed, u.password, u.nick, u.firstName, u.lastName, u.services.mkString(":"))
+    UserPersistence(u.id, u.email, u.emailConfirmed, u.password, u.nick, u.firstName, u.lastName, u.services.mkString(":"), u.salt)
   }
 }

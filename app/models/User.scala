@@ -7,10 +7,11 @@ import persistence.UserRepository
 
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
-
 import com.roundeights.hasher.Implicits._
 
 import scala.language.postfixOps
+import java.math.BigInteger
+import java.security.SecureRandom
 
 case class User(
     id: Option[Long],
@@ -26,7 +27,8 @@ case class User(
 	* Ex: ("serviceA") -> have access only to general and serviceA areas.
 	* Ex: ("serviceA", "serviceB") -> have access only to general, serviceA and serviceB areas.
 	*/
-    services: List[String]
+    services: List[String],
+    salt: String
 ) extends IdentitySilhouette {
   def key = email
   def fullName: String = firstName + " " + lastName
@@ -35,12 +37,13 @@ case class User(
 object User {
 
   val services = Seq("serviceA", "serviceB", "master")
+  val random = new SecureRandom()
 
   val users = scala.collection.mutable.HashMap[Long, User](
-    1L -> User(None, "master@myweb.com", true, (new BCryptPasswordHasher()).hash("123123").password, "Eddy", "Eddard", "Stark", List("master")),
-    2L -> User(None, "a@myweb.com", true, (new BCryptPasswordHasher()).hash("123123").password, "Maggy", "Margaery", "Tyrell", List("serviceA")),
-    3L -> User(None, "b@myweb.com", true, (new BCryptPasswordHasher()).hash("123123").password, "Petyr", "Petyr", "Baelish", List("serviceB")),
-    4L -> User(None, "a_b@myweb.com", true, (new BCryptPasswordHasher()).hash("123123").password, "Tyry", "Tyrion", "Lannister", List("serviceA", "serviceB"))
+    1L -> User(None, "master@myweb.com", true, (new BCryptPasswordHasher()).hash("123123").password, "Eddy", "Eddard", "Stark", List("master"), ""),
+    2L -> User(None, "a@myweb.com", true, (new BCryptPasswordHasher()).hash("123123").password, "Maggy", "Margaery", "Tyrell", List("serviceA"), ""),
+    3L -> User(None, "b@myweb.com", true, (new BCryptPasswordHasher()).hash("123123").password, "Petyr", "Petyr", "Baelish", List("serviceB"), ""),
+    4L -> User(None, "a_b@myweb.com", true, (new BCryptPasswordHasher()).hash("123123").password, "Tyry", "Tyrion", "Lannister", List("serviceA", "serviceB"), "")
   )
 
   //  users.values.foreach(save)
@@ -62,7 +65,9 @@ object User {
     UserRepository.findByEmail(email).map(_.map(UserConverter.fromPersistence))
 
   def save(user: User): Future[User] = {
-    val userEncrypt = user.copy(password = iterate512_10Times(user.password))
+    val salt = generateSalt
+    val pwdEncryptedAndSalted = iterate512_10Times(salt + user.password)
+    val userEncrypt = user.copy(password = pwdEncryptedAndSalted, salt = salt)
     UserRepository.save(UserConverter.fromModel(userEncrypt)).map(_ => userEncrypt)
   }
 
@@ -76,4 +81,6 @@ object User {
     }
     pwd
   }
+
+  def generateSalt: String = new BigInteger(260, new SecureRandom()).toString(32)
 }

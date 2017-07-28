@@ -4,9 +4,11 @@ import models.User
 import com.mohiva.play.silhouette.api.util.PasswordInfo
 import com.mohiva.play.silhouette.persistence.daos.DelegableAuthInfoDAO
 import com.mohiva.play.silhouette.api.LoginInfo
+
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
 import Implicits._
+import com.mohiva.play.silhouette.password.BCryptPasswordHasher
 
 class PasswordInfoDAO extends DelegableAuthInfoDAO[PasswordInfo] {
 
@@ -15,7 +17,7 @@ class PasswordInfoDAO extends DelegableAuthInfoDAO[PasswordInfo] {
 
   def find(loginInfo: LoginInfo): Future[Option[PasswordInfo]] =
     User.findByEmail(loginInfo).map {
-      case Some(user) if user.emailConfirmed => Some(user.password)
+      case Some(user) if user.emailConfirmed => Some(PasswordInfo(BCryptPasswordHasher.ID, user.password, salt = Some(user.salt)))
       case _ => None
     }
 

@@ -32,8 +32,9 @@ class UsersTable(tag: Tag) extends Table[UserPersistence](tag, "users") {
   def firstName = column[String]("firstName")
   def lastName = column[String]("lastName")
   def services = column[String]("services")
+  def salt = column[String]("salt")
 
-  def * = (id.?, email, emailConfirmed, password, nick, firstName, lastName, services) <> (UserPersistence.tupled, UserPersistence.unapply)
+  def * = (id.?, email, emailConfirmed, password, nick, firstName, lastName, services, salt) <> (UserPersistence.tupled, UserPersistence.unapply)
 }
 
 case class UserPersistence(
@@ -50,5 +51,6 @@ case class UserPersistence(
   * Ex: ("serviceA") -> have access only to general and serviceA areas.
   * Ex: ("serviceA", "serviceB") -> have access only to general, serviceA and serviceB areas.
   */
-  services: String //Services separated by ':'
+  services: String, //Services separated by ':'
+  salt: String
 )

@@ -26,7 +26,7 @@ class Sha512PasswordHasher extends BCryptPasswordHasher {
   }
 
   override def matches(passwordInfo: PasswordInfo, suppliedPassword: String) = {
-    iterate512_10Times(suppliedPassword).equals(passwordInfo.password)
+    iterate512_10Times(passwordInfo.salt.getOrElse("") + suppliedPassword).equals(passwordInfo.password)
   }
 
   override def isDeprecated(passwordInfo: PasswordInfo): Option[Boolean] = {
