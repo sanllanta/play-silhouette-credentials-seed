@@ -212,25 +212,32 @@ class Auth @Inject() (
    */
   def authenticate = UnsecuredAction.async { implicit request =>
     signInForm.bindFromRequest.fold(
-      formWithErrors => Future.successful(BadRequest(viewsAuth.signIn(formWithErrors))),
+      formWithErrors => {
+        Future.successful(BadRequest(viewsAuth.signIn(formWithErrors)))
+      },
       formData => {
         val (identifier, password, rememberMe) = formData
         val entryUri = request.session.get("ENTRY_URI")
         val targetUri: String = entryUri.getOrElse(routes.Application.index.toString)
         credentialsProvider.authenticate(Credentials(identifier, password)).flatMap { loginInfo =>
           userService.retrieve(loginInfo).flatMap {
-            case Some(user) => for {
-              authenticator <- env.authenticatorService.create(loginInfo).map(authenticatorWithRememberMe(_, rememberMe))
-              cookie <- env.authenticatorService.init(authenticator)
-              result <- env.authenticatorService.embed(cookie, Redirect(targetUri).withSession(request.session - "ENTRY_URI"))
-            } yield {
-              env.eventBus.publish(LoginEvent(user, request))
-              result
-            }
-            case None => Future.failed(new IdentityNotFoundException("Couldn't find user"))
+            case Some(user) =>
+              for {
+                authenticator <- env.authenticatorService.create(loginInfo).map(authenticatorWithRememberMe(_, rememberMe))
+                cookie <- env.authenticatorService.init(authenticator)
+                result <- env.authenticatorService.embed(cookie, Redirect(targetUri).withSession(request.session - "ENTRY_URI"))
+              } yield {
+                env.eventBus.publish(LoginEvent(user, request))
+                result
+              }
+            case None =>
+              Future.failed(new IdentityNotFoundException("Couldn't find user"))
           }
         }.recover {
-          case e: ProviderException => Redirect(routes.Auth.signIn).flashing("error" -> Messages("auth.credentials.incorrect"))
+          case e: ProviderException => {
+            e.printStackTrace()
+            Redirect(routes.Auth.signIn).flashing("error" -> Messages("auth.credentials.incorrect"))
+          }
         }
       }
     )
