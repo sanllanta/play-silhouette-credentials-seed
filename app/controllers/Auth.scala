@@ -140,9 +140,9 @@ class Auth @Inject() (
           case None => {
             val token = MailTokenUser(user.email, isSignUp = true)
             for {
-              savedUser <- userService.save(user)
-              _ <- authInfoRepository.add(loginInfo, passwordHasherRegistry.current.hash(user.password))
-              _ <- tokenService.create(token)
+              savedUser <- { Logger.logger.info("INTENTANDO GUARDAR USUARIO -> " + user); userService.save(user) }
+              _ <- { Logger.logger.info("INTENTANDO GUARDAR CONTRASEÑA? -> " + loginInfo); authInfoRepository.add(loginInfo, passwordHasherRegistry.current.hash(user.password)) }
+              _ <- { Logger.logger.info("INTENTANDO GUARDAR TOKEN? -> " + token); tokenService.create(token) }
             } yield {
               mailer.welcome(savedUser, link = routes.Auth.signUp(token.id).absoluteURL())
               Ok(viewsAuth.almostSignedUp(savedUser))

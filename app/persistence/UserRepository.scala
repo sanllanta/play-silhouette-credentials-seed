@@ -2,7 +2,6 @@ package persistence
 
 import slick.driver.PostgresDriver.api._
 import slick.lifted.Tag
-
 import scala.concurrent.Future
 
 object UserRepository {
@@ -25,7 +24,7 @@ object UserRepository {
 }
 
 class UsersTable(tag: Tag) extends Table[UserPersistence](tag, "users") {
-  def id = column[Long]("id", O.PrimaryKey, O.AutoInc)
+  def id = column[Long]("id", O.AutoInc)
   def email = column[String]("email", O.PrimaryKey)
   def emailConfirmed = column[Boolean]("emailConfirmed")
   def password = column[String]("password")

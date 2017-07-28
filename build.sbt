@@ -27,6 +27,23 @@ doc in Compile <<= target.map(_ / "none")
 
 scalariformSettings
 
+proguardSettings
+
+ProguardKeys.options in Proguard ++= Seq("-dontnote", "-dontwarn", "-ignorewarnings")
+ProguardKeys.proguardVersion in Proguard := "5.2.1"
+val keepClasses =
+  """
+    |-keepparameternames
+    |-keepattributes Exceptions,InnerClasses,Signature,Deprecated,
+    |                SourceFile,LineNumberTable,*Annotation*,EnclosingMethod
+    |
+    |-keep,includedescriptorclasses interface com.** {
+    |    <methods>;
+    |}
+  """.stripMargin
+ProguardKeys.options in Proguard += keepClasses
+javaOptions in (Proguard, ProguardKeys.proguard) := Seq("-Xmx2G")
+
 libraryDependencies ++= Seq(
   cache,
   ws,
