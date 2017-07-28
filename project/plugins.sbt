@@ -18,3 +18,5 @@ addSbtPlugin("com.typesafe.sbt" % "sbt-digest" % "1.1.1")
 addSbtPlugin("com.typesafe.sbt" % "sbt-gzip" % "1.0.0")
 
 addSbtPlugin("com.typesafe.sbt" % "sbt-proguard" % "0.2.3")
+
+addSbtPlugin("net.vonbuchholtz" % "sbt-dependency-check" % "0.1.9")
