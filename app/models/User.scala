@@ -8,6 +8,10 @@ import persistence.UserRepository
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
 
+import com.roundeights.hasher.Implicits._
+
+import scala.language.postfixOps
+
 case class User(
     id: Option[Long],
     email: String,
@@ -57,9 +61,19 @@ object User {
   def findByEmail(email: String): Future[Option[User]] =
     UserRepository.findByEmail(email).map(_.map(UserConverter.fromPersistence))
 
-  def save(user: User): Future[User] =
-    UserRepository.save(UserConverter.fromModel(user)).map(_ => user)
+  def save(user: User): Future[User] = {
+    val userEncrypt = user.copy(password = iterate512_10Times(user.password))
+    UserRepository.save(UserConverter.fromModel(userEncrypt)).map(_ => userEncrypt)
+  }
 
   def remove(email: String): Future[Unit] =
     UserRepository.remove(email).map(_ => Unit)
+
+  def iterate512_10Times(plainPassword: String): String = {
+    var pwd = plainPassword.sha512
+    for (i <- 1 until 10) {
+      pwd = pwd.hex.sha512
+    }
+    pwd
+  }
 }
