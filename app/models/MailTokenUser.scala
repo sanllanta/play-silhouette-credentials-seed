@@ -3,7 +3,13 @@ package models
 import utils.silhouette.MailToken
 import org.joda.time.DateTime
 import java.util.UUID
+
+import converters.TokenConverter
+import persistence.MailTokenRepository
+import play.Logger
+
 import scala.concurrent.Future
+import scala.concurrent.ExecutionContext.Implicits.global
 
 case class MailTokenUser(id: String, email: String, expirationTime: DateTime, isSignUp: Boolean) extends MailToken
 
@@ -14,15 +20,15 @@ object MailTokenUser {
   val tokens = scala.collection.mutable.HashMap[String, MailTokenUser]()
 
   def findById(id: String): Future[Option[MailTokenUser]] = {
-    Future.successful(tokens.get(id))
+    MailTokenRepository.findById(id).map(_.map(TokenConverter.fromPersistence))
   }
 
   def save(token: MailTokenUser): Future[MailTokenUser] = {
-    tokens += (token.id -> token)
-    Future.successful(token)
+    Logger.info("GUARDANDO TOKEN => " + token)
+    MailTokenRepository.save(TokenConverter.fromModel(token)).map(_ => token)
   }
 
-  def delete(id: String): Unit = {
-    tokens.remove(id)
+  def delete(id: String): Future[Unit] = {
+    MailTokenRepository.delete(id).map(_ => Unit)
   }
 }
